@@ -1,0 +1,230 @@
+<!doctype html> <!-- dichiarazione della versione html5 -->
+<html> <!-- inizio codice html -->
+<head> <!-- inizio parte logica della pagina -->
+	<meta charset="utf-8" /> <!-- dichiarazione del tipo di caratteri -->
+	<title>Ri-Generation - Assistenza telefoni</title> <!-- titolo della pagina -->
+	<!-- font Oswald da Google Fonts per i titoli -->
+	<link rel="preconnect" href="https://fonts.googleapis.com" />
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+	<link href="https://fonts.googleapis.com/css2?family=Oswald&display=swap" rel="stylesheet" />
+	<style> /* formattazione CSS interna alla pagina */
+		body { /* impostazioni standard dell'intera pagina, ereditate dagli altri elementi */
+			font-family: Arial, sans-serif;
+			font-size: 14px;
+			color: #333333; /* testo grigio scuro, meno duro del nero */
+			background-color: #e9edf0; /* sfondo grigio-azzurro chiaro */
+			margin: 0px;
+			padding: 30px 10px; /* top/bottom 30px, left/right 10px */
+		}
+		#zonaForm, #zonaRicevuta { /* i due contenitori: "fogli" bianchi centrati */
+			width: 700px;
+			margin-left: auto; /* margini automatici: div centrato orizzontalmente */
+			margin-right: auto;
+			background-color: white;
+		}
+		div.foglio { /* riquadro del form con bordo e spaziatura interna (sta dentro zonaForm, così sparisce con il form) */
+			padding: 25px 30px;
+			border: 1px solid #c8d0d6;
+			border-top: 6px solid #1f6f8b; /* striscia colorata in alto */
+		}
+		#zonaRicevuta { background-color: transparent; } /* la ricevuta usa lo sfondo della sua tabella */
+		h2 { /* titolo del form */
+			font-family: 'Oswald', sans-serif;
+			font-size: 1.7rem;
+			color: #1f6f8b;
+			text-align: center;
+			margin-top: 0px;
+			padding-bottom: 10px;
+			border-bottom: 1px solid #c8d0d6; /* linea sotto il titolo */
+		}
+		table { margin-left: auto; margin-right: auto; } /* tabelle centrate orizzontalmente */
+		table.campi { width: 100%; } /* tabella che ordina i controlli del form */
+		table.campi td { padding: 6px 4px; }
+		td.etichetta { /* testi accanto ai controlli */
+			width: 40%;
+			font-weight: bold;
+			color: #444444;
+		}
+		span.obbligatorio { color: #c0392b; } /* asterisco rosso dei campi obbligatori */
+		span.nota { font-weight: normal; font-size: 12px; color: #777777; } /* nota tra parentesi */
+		input, select, textarea { /* caselle di testo, menù a tendina, aree di testo */
+			width: 100%;
+			box-sizing: border-box; /* il padding resta dentro la larghezza, così le caselle non escono dalla cella */
+			padding: 7px;
+			font-family: Arial, sans-serif;
+			font-size: 14px;
+			color: #333333;
+			border: 1px solid #b5c0c8;
+			background-color: #fbfcfd;
+		}
+		textarea { height: 80px; } /* area di testo più alta */
+		div.pulsanti { text-align: center; margin-top: 20px; } /* zona dei pulsanti centrata */
+		input.pulsante { /* tutti i pulsanti */
+			width: auto; /* larghi quanto il loro testo, non 100% */
+			padding: 10px 22px;
+			margin: 0px 5px;
+			font-family: 'Oswald', sans-serif;
+			font-size: 15px;
+			color: white;
+			background-color: #1f6f8b; /* blu petrolio */
+			border: 1px solid #1f6f8b;
+			cursor: pointer; /* puntatore a mano */
+		}
+		input.secondario { /* pulsante Cancella, meno evidente */
+			color: #1f6f8b;
+			background-color: white;
+		}
+		table.ricevuta { /* scheda/ricevuta da stampare */
+			width: 100%;
+			background-color: white;
+			border: 1px solid #555555;
+		}
+		table.ricevuta th { /* intestazione della ricevuta */
+			font-family: 'Oswald', sans-serif;
+			font-size: 18px;
+			color: white;
+			background-color: #555555;
+			padding: 10px;
+		}
+		table.ricevuta td { /* tutte le celle della ricevuta */
+			padding: 7px 10px;
+			border-top: 1px solid #cccccc;
+			vertical-align: top; /* testo in cima alla cella, come nella traccia */
+		}
+		table.ricevuta tr.pari td { background-color: #f3f5f7; } /* righe alternate leggermente grigie */
+		td.voce { width: 45%; border-right: 1px solid #cccccc; } /* colonna sinistra della ricevuta */
+		td.dato { text-align: justify; font-weight: bold; } /* colonna destra: i dati del cliente */
+	</style>
+	<script> // inizio codice JavaScript
+		let formIniziale; // variabile globale: conserva il codice del form vuoto per poterlo ripristinare
+
+		function salvaForm() { // richiamata dall'evento intrinseco onload del body
+			formIniziale = document.getElementById("zonaForm").innerHTML; // memorizza il form così com'è al caricamento
+		}
+
+		function generaRicevuta() { // richiamata dal pulsante "Genera ricevuta"
+			// lettura dei dati immessi nel form (il name del form lo identifica in JavaScript)
+			let nome = document.modulo.nome.value;
+			let cognome = document.modulo.cognome.value;
+			let codiceFiscale = document.modulo.codiceFiscale.value.toUpperCase(); // codice fiscale sempre in maiuscolo
+			let citta = document.modulo.citta.value;
+			let gestore = document.modulo.gestore.value;
+			let telefono = document.modulo.telefono.value;
+			let marca = document.modulo.marca.value;
+			let modello = document.modulo.modello.value;
+			let problema = document.modulo.problema.value;
+			let recapito = document.modulo.recapito.value;
+
+			// controllo con l'algebra booleana: basta un campo obbligatorio vuoto (OR) per bloccare la ricevuta
+			if (nome == "" || cognome == "" || codiceFiscale == "" || citta == "" || gestore == "" || telefono == "" || marca == "" || modello == "" || problema == "") {
+				alert("Compilare tutti i campi obbligatori (*)"); // messaggio di errore, i dati restano nel form
+			} else {
+				if (recapito == "") { // ultima voce non compilata
+					recapito = telefono; // si stampa lo stesso numero del dispositivo
+				}
+
+				document.getElementById("zonaForm").innerHTML = ""; // nasconde il form di input svuotandone il div
+
+				// costruzione della ricevuta: i dati sono semplice testo, quindi non modificabili
+				document.getElementById("zonaRicevuta").innerHTML =
+					"<table class='ricevuta' cellspacing='0'>" +
+					"<tr><th colspan='2'>Ri-Generation &ndash; Via Pavoncelli 118, Bari<br />Ricevuta di consegna</th></tr>" +
+					"<tr><td class='voce'>Nome</td><td class='dato'>" + nome + "</td></tr>" +
+					"<tr class='pari'><td class='voce'>Cognome</td><td class='dato'>" + cognome + "</td></tr>" +
+					"<tr><td class='voce'>Codice Fiscale</td><td class='dato'>" + codiceFiscale + "</td></tr>" +
+					"<tr class='pari'><td class='voce'>Città</td><td class='dato'>" + citta + "</td></tr>" +
+					"<tr><td class='voce'>Gestore telefonico</td><td class='dato'>" + gestore + "</td></tr>" +
+					"<tr class='pari'><td class='voce'>Numero di telefono dispositivo</td><td class='dato'>" + telefono + "</td></tr>" +
+					"<tr><td class='voce'>Marca dispositivo</td><td class='dato'>" + marca + "</td></tr>" +
+					"<tr class='pari'><td class='voce'>Modello dispositivo</td><td class='dato'>" + modello + "</td></tr>" +
+					"<tr><td class='voce'>Breve descrizione del problema</td><td class='dato'>" + problema + "</td></tr>" +
+					"<tr class='pari'><td class='voce'>Recapito di contatto (se diverso dal numero del dispositivo in riparazione)</td><td class='dato'>" + recapito + "</td></tr>" +
+					"</table>" +
+					"<div class='pulsanti'><input type='button' value='Torna al form' class='pulsante' onclick='tornaAlForm()' /></div>";
+			}
+		}
+
+		function tornaAlForm() { // richiamata dal pulsante "Torna al form"
+			document.getElementById("zonaRicevuta").innerHTML = ""; // nasconde la ricevuta
+			document.getElementById("zonaForm").innerHTML = formIniziale; // ripristina il form vuoto, alle condizioni iniziali
+		}
+	</script>
+</head>
+<body onload="salvaForm()"> <!-- inizio parte fisica della pagina, al caricamento si memorizza il form -->
+	<div id="zonaForm"> <!-- contenitore del form di input -->
+		<div class="foglio"> <!-- riquadro bianco del form -->
+		<h2>Ri-Generation &ndash; Accettazione dispositivo</h2> <!-- titolo del modulo -->
+		<form name="modulo"> <!-- modulo per gli operatori del negozio -->
+			<table class="campi" cellspacing="0"> <!-- tabella per mettere in ordine i controlli -->
+				<tr>
+					<td class="etichetta">Nome <span class="obbligatorio">*</span></td>
+					<td><input type="text" name="nome" /></td> <!-- casella di testo -->
+				</tr>
+				<tr>
+					<td class="etichetta">Cognome <span class="obbligatorio">*</span></td>
+					<td><input type="text" name="cognome" /></td>
+				</tr>
+				<tr>
+					<td class="etichetta">Codice Fiscale <span class="obbligatorio">*</span></td>
+					<td><input type="text" name="codiceFiscale" maxlength="16" placeholder="16 caratteri" /></td> <!-- massimo 16 caratteri -->
+				</tr>
+				<tr>
+					<td class="etichetta">Città <span class="obbligatorio">*</span></td>
+					<td><input type="text" name="citta" /></td>
+				</tr>
+				<tr>
+					<td class="etichetta">Gestore telefonico <span class="obbligatorio">*</span></td>
+					<td>
+						<select name="gestore"> <!-- menù a tendina, scelta singola -->
+							<option value="">-- scegli --</option> <!-- value vuoto: nessuna scelta -->
+							<option>TIM</option> <!-- senza value si invia l'etichetta -->
+							<option>Vodafone</option>
+							<option>WindTre</option>
+							<option>Iliad</option>
+							<option>Fastweb</option>
+							<option>Altro</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td class="etichetta">Numero di telefono dispositivo <span class="obbligatorio">*</span></td>
+					<td><input type="tel" name="telefono" /></td> <!-- casella per numeri di telefono -->
+				</tr>
+				<tr>
+					<td class="etichetta">Marca dispositivo <span class="obbligatorio">*</span></td>
+					<td>
+						<select name="marca">
+							<option value="">-- scegli --</option>
+							<option>Apple</option>
+							<option>Samsung</option>
+							<option>Xiaomi</option>
+							<option>Huawei</option>
+							<option>Oppo</option>
+							<option>Motorola</option>
+							<option>Altro</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td class="etichetta">Modello dispositivo <span class="obbligatorio">*</span></td>
+					<td><input type="text" name="modello" /></td>
+				</tr>
+				<tr>
+					<td class="etichetta">Breve descrizione del problema <span class="obbligatorio">*</span></td>
+					<td><textarea name="problema"></textarea></td> <!-- area di testo su più righe -->
+				</tr>
+				<tr>
+					<td class="etichetta">Recapito di contatto<br /><span class="nota">(se diverso dal numero del dispositivo)</span></td>
+					<td><input type="tel" name="recapito" /></td> <!-- facoltativo -->
+				</tr>
+			</table>
+			<div class="pulsanti"> <!-- zona pulsanti -->
+				<input type="button" class="pulsante" value="Genera ricevuta" onclick="generaRicevuta()" /> <!-- pulsante programmabile -->
+				<input type="reset" class="pulsante secondario" value="Cancella" /> <!-- reimposta i campi ai valori iniziali -->
+			</div>
+		</form>
+		</div>
+	</div>
+	<div id="zonaRicevuta"></div> <!-- contenitore della ricevuta, riempito via JavaScript con innerHTML -->
+</body>
+</html> <!-- fine codice html -->
